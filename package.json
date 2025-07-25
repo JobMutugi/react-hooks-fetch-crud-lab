@@ -21,6 +21,11 @@
     "mocha": "^8.2.1",
     "msw": "^0.24.2"
   },
+  "jest": {
+    "moduleNameMapper": {
+      "@adobe/css-tools": "<rootDir>/__mocks__/emptyMock.js"
+    }
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

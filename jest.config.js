@@ -1,7 +1,9 @@
 module.exports = {
   transform: {
-    "^.+\\.jsx?$": "babel-jest",
+    "^.+\\.[jt]sx?$": "babel-jest",
   },
-  transformIgnorePatterns: ["node_modules/(?!@adobe/css-tools)"],
   testEnvironment: "jsdom",
+  transformIgnorePatterns: [
+    "/node_modules/(?!(\\@adobe/css-tools)/)"
+  ],
 };
