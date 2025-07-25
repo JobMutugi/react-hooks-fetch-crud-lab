@@ -1,87 +1,100 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-function QuestionForm(props) {
+function QuestionForm({ onAddQuestion }) {
   const [formData, setFormData] = useState({
     prompt: "",
-    answer1: "",
-    answer2: "",
-    answer3: "",
-    answer4: "",
+    answers: ["", "", "", ""],
     correctIndex: 0,
   });
 
-  function handleChange(event) {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  function handleInputChange(event) {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "correctIndex" ? parseInt(value) : value,
+    }));
+  }
+
+  function handleAnswerChange(index, value) {
+    const updatedAnswers = [...formData.answers];
+    updatedAnswers[index] = value;
+    setFormData((prev) => ({
+      ...prev,
+      answers: updatedAnswers,
+    }));
   }
 
   function handleSubmit(event) {
     event.preventDefault();
-    console.log(formData);
+    fetch("http://localhost:4000/questions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: formData.prompt,
+        answers: formData.answers,
+        correctIndex: formData.correctIndex,
+      }),
+    })
+      .then((r) => r.json())
+      .then((newQuestion) => {
+        onAddQuestion(newQuestion);
+        // Only update form state if component is still mounted
+        if (isMounted.current) {
+          setFormData({
+            prompt: "",
+            answers: ["", "", "", ""],
+            correctIndex: 0,
+          });
+        }
+      });
   }
 
   return (
     <section>
       <h1>New Question</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} data-testid="question-form">
         <label>
           Prompt:
           <input
             type="text"
             name="prompt"
             value={formData.prompt}
-            onChange={handleChange}
+            onChange={handleInputChange}
           />
         </label>
-        <label>
-          Answer 1:
-          <input
-            type="text"
-            name="answer1"
-            value={formData.answer1}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 2:
-          <input
-            type="text"
-            name="answer2"
-            value={formData.answer2}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 3:
-          <input
-            type="text"
-            name="answer3"
-            value={formData.answer3}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 4:
-          <input
-            type="text"
-            name="answer4"
-            value={formData.answer4}
-            onChange={handleChange}
-          />
-        </label>
+        {formData.answers.map((answer, index) => (
+          <label key={index}>
+            Answer {index + 1}:
+            <input
+              type="text"
+              value={answer}
+              onChange={(e) => handleAnswerChange(index, e.target.value)}
+            />
+          </label>
+        ))}
         <label>
           Correct Answer:
           <select
             name="correctIndex"
             value={formData.correctIndex}
-            onChange={handleChange}
+            onChange={handleInputChange}
           >
-            <option value="0">{formData.answer1}</option>
-            <option value="1">{formData.answer2}</option>
-            <option value="2">{formData.answer3}</option>
-            <option value="3">{formData.answer4}</option>
+            {formData.answers.map((_, index) => (
+              <option key={index} value={index}>
+                {index}
+              </option>
+            ))}
           </select>
         </label>
         <button type="submit">Add Question</button>
